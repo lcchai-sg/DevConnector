@@ -183,4 +183,104 @@ router.put('/unlike/:id', auth, async (req, res) => {
   }
 });
 
+// @route     POST api/posts
+// @desc      Create a post
+// @access    Private
+router.post('/', [auth, [
+  check('text', 'Text is required').not().isEmpty()
+]], async (req, res) => {
+  const errors = validationResult(req);
+  console.log('errors: ', errors);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      errors: errors.array()
+    });
+  }
+
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    const newPost = new Post({
+      text: req.body.text,
+      name: user.name,
+      avatar: user.avatar,
+      user: req.user.id,
+    });
+
+    await newPost.save();
+    res.status(200).json(newPost);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route     POST api/posts/comment/:id
+// @desc      Comment on a post
+// @access    Private
+router.post('/comment/:id', [auth, [
+  check('text', 'Text is required').not().isEmpty()
+]], async (req, res) => {
+  const errors = validationResult(req);
+  console.log('errors: ', errors);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      errors: errors.array()
+    });
+  }
+
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    const post = await Post.findById(req.params.id);
+
+    const newComment = {
+      text: req.body.text,
+      name: user.name,
+      avatar: user.avatar,
+      user: req.user.id,
+    };
+    post.comments.unshift(newComment);
+
+    await post.save();
+    res.status(200).json(post.comments);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route     POST api/posts/comment/:id/:comm_id
+// @desc      Delete comment
+// @access    Private
+router.delete('/comment/:id/:comm_id', auth, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({
+        msg: 'Post not found'
+      });
+    }
+
+    // get the remove index
+    const removeIndex = post.comments.map(comment => comment.id.toString()).indexOf(req.params.comm_id);
+
+    if (removeIndex >= 0) {
+      if (post.comments[removeIndex].user.toString() !== req.user.id) {
+        return res.status(401).json({
+          msg: 'User not authorized'
+        });
+      }
+      post.comments.splice(removeIndex, 1);
+      await post.save();
+    } else {
+      return res.status(400).json({
+        msg: 'Comment does not exist'
+      });
+    }
+    res.status(200).json(post.comments);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;
