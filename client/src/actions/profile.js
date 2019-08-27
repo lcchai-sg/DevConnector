@@ -7,7 +7,7 @@ import {
   UPDATE_PROFILE,
   CLEAR_PROFILE,
   ACCOUNT_DELETED,
-  GET_REPOS,
+  GET_REPOS
 } from './types';
 
 // get current users profile
@@ -49,7 +49,7 @@ export const getProfiles = () => async dispatch => {
 // get profile by ID
 export const getProfileById = userId => async dispatch => {
   try {
-    const result = await axios.get(`/api/profile/${userId}`);
+    const result = await axios.get(`/api/profile/user/${userId}`);
 
     dispatch({
       type: GET_PROFILE,
@@ -191,7 +191,7 @@ export const deleteExperience = id => async dispatch => {
 
     dispatch({
       type: UPDATE_PROFILE,
-      payload: result.data,
+      payload: result.data
     });
 
     dispatch(setAlert('Experience Removed', 'success'));
@@ -210,7 +210,7 @@ export const deleteEducation = id => async dispatch => {
 
     dispatch({
       type: UPDATE_PROFILE,
-      payload: result.data,
+      payload: result.data
     });
 
     dispatch(setAlert('Education Removed', 'success'));
@@ -229,7 +229,7 @@ export const deleteAccount = () => async dispatch => {
       await axios.delete('/api/profile/');
 
       dispatch({ type: CLEAR_PROFILE });
-      dispatch({ type: ACCOUNT_DELETED })
+      dispatch({ type: ACCOUNT_DELETED });
 
       dispatch(setAlert('Your account has been permanently deleted'));
     } catch (err) {
